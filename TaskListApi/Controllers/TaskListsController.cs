@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using TaskListApi.Dtos;
 using TaskListApi.Services.Interfaces;
 
@@ -30,10 +31,17 @@ public class TaskListsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateTaskListDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateTaskListDto dto, [FromServices] FluentValidation.IValidator<CreateTaskListDto> validator)
     {
-        if (!ModelState.IsValid)
+        var validationResult = await validator.ValidateAsync(dto);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
             return BadRequest(ModelState);
+        }
 
         await _service.CreateAsync(dto);
         return Ok();
@@ -70,6 +78,12 @@ public class TaskListsController : ControllerBase
     public async Task<IActionResult> Unshare(string taskListId, [FromQuery] string ownerUserId, [FromQuery] string sharedWithUserId)
     {
         return await _service.UnshareAsync(taskListId, ownerUserId, sharedWithUserId);
+    }
+
+    [HttpGet("error")]
+    public IActionResult GetError()
+    {
+        throw new Exception("Test error from controller!");
     }
 }
 
