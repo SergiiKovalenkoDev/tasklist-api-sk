@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using TaskListApi.Dtos;
 using TaskListApi.Mapping;
 using TaskListApi.Models;
@@ -44,12 +43,36 @@ public class TaskListService : ITaskListService
         return list != null ? TaskListMapper.ToDto(list) : null;
     }
 
-    public async Task CreateAsync(CreateTaskListDto dto)
+    public async Task<TaskListDto> CreateAsync(CreateTaskListDto dto)
     {
+        if (dto == null)
+        {
+            _logger.LogWarning("CreateAsync called with null dto");
+            throw new ArgumentNullException(nameof(dto));
+        }
+
+        // Додаткова перевірка, якщо потрібно
+        if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            _logger.LogWarning("CreateAsync called with empty Name");
+            throw new ArgumentException("Name is required", nameof(dto.Name));
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.OwnerUserId))
+        {
+            _logger.LogWarning("CreateAsync called with empty OwnerUserId");
+            throw new ArgumentException("OwnerUserId is required", nameof(dto.OwnerUserId));
+        }
+
         _logger.LogInformation("Creating new task list for owner {OwnerUserId} with name '{Name}'", dto.OwnerUserId, dto.Name);
+
         var newList = TaskListMapper.ToModel(dto);
         await _repo.CreateAsync(newList);
+
         _logger.LogInformation("Task list created with id {TaskListId}", newList.Id);
+
+        // Повертаємо DTO для контролера
+        return TaskListMapper.ToDto(newList);
     }
 
     public async Task UpdateAsync(string taskListId, UpdateTaskListDto dto)
