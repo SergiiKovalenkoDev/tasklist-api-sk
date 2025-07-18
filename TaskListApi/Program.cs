@@ -9,6 +9,7 @@ using TaskListApi.Repositories.Interfaces;
 using TaskListApi.Services;
 using TaskListApi.Services.Interfaces;
 using TaskListApi.Validators;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,8 +24,12 @@ builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddScoped<ITaskListRepository, TaskListRepository>();
 builder.Services.AddScoped<ITaskListService, TaskListService>();
 
-builder.Logging.AddConsole();
-builder.Logging.SetMinimumLevel(LogLevel.Debug);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddCortexMediator(
     builder.Configuration,

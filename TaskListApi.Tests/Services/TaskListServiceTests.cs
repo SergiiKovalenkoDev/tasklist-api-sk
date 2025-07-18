@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using Microsoft.Extensions.Logging;
+using Moq;
 using TaskListApi.Dtos;
 using TaskListApi.Models;
 using TaskListApi.Repositories.Interfaces;
@@ -14,8 +15,10 @@ public class TaskListServiceTests
 
     public TaskListServiceTests()
     {
-        _repoMock = new Mock<ITaskListRepository>();
-        _service = new TaskListService(_repoMock.Object);
+        var repoMock = new Mock<ITaskListRepository>();
+        var loggerMock = new Mock<ILogger<TaskListService>>();
+
+        var service = new TaskListService(repoMock.Object, loggerMock.Object);
     }
 
     [Fact]
